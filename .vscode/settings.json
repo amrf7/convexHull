@@ -2,6 +2,21 @@
     "files.associations": {
         "cmath": "cpp",
         "iostream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "random": "cpp",
+        "*.tcc": "cpp",
+        "chrono": "cpp",
+        "complex": "cpp",
+        "future": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "memory": "cpp",
+        "streambuf": "cpp",
+        "tuple": "cpp",
+        "bvh": "cpp",
+        "mprealsupport": "cpp",
+        "nonlinearoptimization": "cpp",
+        "polynomials": "cpp",
+        "splines": "cpp"
     }
 }

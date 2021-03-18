@@ -28,34 +28,81 @@ struct Triangle {
 		return (ab*bc*ac) / sqrt((ab+bc+ac)*(bc+ac-ab)*(ac+ab-bc)*(ab+bc-ac));
 	}
 
-	void eliminateFromHeap() {
+	void removeFromHeap() {
 		inHeap = false;
 	}
 };
 
-struct radius {
-	int index;
-	double r;
+struct Radius {
+	int midpointIndex, triangleIndex;
+	double radius;
 
-	radius(int i, double R) {
-		index = i;
-		r = R;
+	Radius(int pIndex, int tIndex, double R) {
+		midpointIndex = pIndex;
+		triangleIndex = tIndex;
+		radius = R;
 	}
 };
 
-void swap(radius *a, radius *b) {
-	radius temp = *a;
+struct Point {
+	Vector2d point;
+	bool inHull = true;
+
+	Point(Vector2d p) {
+		point = p;
+	}
+
+	void removeFromHull() {
+		inHull = false;
+	}
+};
+
+void printPoints(const vector<Point> &points) {
+	int n = 0;
+	for (auto i = points.begin(); i != points.end(); i++) {
+		cout << "Point " << n << endl;
+		cout << (*i).point << endl;
+		cout << "Length: " << (*i).point.norm() << endl;
+		cout << "inHull: " << (*i).inHull << endl;
+		cout << '\n' << endl;
+		n++;
+	}
+}
+
+void printTriangles(const list<Triangle> &triangles) {
+	int n = 0;
+	for(auto i = triangles.begin(); i != triangles.end(); i++) {
+		cout << "Triangle " << n << ": " << endl;
+		cout << "a\t\tb\t\tc" << endl;
+		cout << (*i).a.norm() << "\t\t" << (*i).b.norm() << "\t\t" << (*i).c.norm() << endl;
+		cout << "Circum circle: " << (*i).d << endl;
+		cout << "inHeap: " << (*i).inHeap << '\n' << endl;
+		n++;
+	}
+}
+
+void printHeap(const vector<Radius> heap) {
+	cout << "\nHeap of cc Radius" << endl;
+	for(auto i = heap.begin(); i != heap.end(); i++){
+		cout << "midpointIndex\ttriangleIndex\tcircumCircle Radius" << endl;
+		cout << (*i).midpointIndex << "\t\t" << (*i).triangleIndex << "\t\t" << (*i).radius << endl;
+	}
+}
+
+
+void swap(Radius *a, Radius *b) {
+	Radius temp = *a;
 	*a = *b;
 	*b = temp;
 }
 
-void insertElementToHeap(vector<radius> &heap, radius a) {
+void insertElementToHeap(vector<Radius> &heap, Radius a) {
 	heap.push_back(a);
 	if(heap.size() > 1){
 		int childIndex = heap.size();
 		int parentIndex = int(childIndex / 2);
 		
-		while(heap[parentIndex - 1].r < a.r){
+		while(heap[parentIndex - 1].radius < a.radius){
 			//cout << heap[parentIndex - 1].r << " < " << heap[childIndex - 1].r <<endl;
 			swap(heap[parentIndex - 1], heap[childIndex - 1]);
 			if(parentIndex - 2 < 0) break;
@@ -65,104 +112,59 @@ void insertElementToHeap(vector<radius> &heap, radius a) {
 	}
 }
 
-list<Triangle> listTriangles(vector<Vector2d> points, vector<radius> &heap) {
+list<Triangle> listTriangles(vector<Point> points, vector<Radius> &heap) {
 	list<Triangle> triangles;
 	int n = points.size();
 	
 	for (int i = 0; i < n; i++) {
-		Triangle t = Triangle(points[i % n], points[(i + 1) % n], points[(i + 2) % n]);
+		Triangle t = Triangle(points[i % n].point, points[(i + 1) % n].point, points[(i + 2) % n].point);
+		Radius r = Radius((i + 1) % n, i, t.d);
 		triangles.push_back(t);
-		insertElementToHeap(heap, radius((i + 1) % n, t.d));
+		insertElementToHeap(heap, r);
 	}
 
 	return triangles;
 }
 
-vector<double> heapify(list<Triangle> triangles) {
-	vector<double> heap;
-	for (Triangle &triangle : triangles) {
-		heap.push_back(triangle.d);
+void removePointFromHull(vector<Point> &points, list<Triangle> &triangles, const Radius &heap) {
+	list<Triangle>::iterator it;
+	int trianglesSize = triangles.size();
+	int trianglesIndex =  trianglesSize + heap.triangleIndex;
+	for(int i = -1; i <= 1; i++){
+		it = triangles.begin();
+		advance(it, (trianglesIndex + i) % trianglesSize);
+		(*it).removeFromHeap();
 	}
-
-	make_heap(heap.begin(), heap.end());
-
-	return heap;
+	points[heap.midpointIndex].removeFromHull();
 }
 
-// Vector2d findPoint(double maxHeap, list<Triangle> triangles) {
-// 	for (Triangle& triangle : triangles) {
-// 		if (triangle.d == maxHeap) {
-// 			return triangle.b;
-// 			break;
-// 		}
-// 	}
-// 	return Vector2d(0, 0);
-// }
+void updateTriangles(vector<Point> points,  list<Triangle> triangles){
+	
+}
 
-// vector<Vector2d> deletePoint(vector<Vector2d> points, Vector2d point) {
-// 	for (int i = 0; i < points.size(); i++) {
-// 		if ((points[i] - point).norm() == 0) {
-// 			points.erase(points.begin() + i);
-// 		}
-// 	}
-// 	return points;
-// }
+void sch(vector<Point> &points){
+	double alpha = 11.251;
 
-// vector<Vector2d> sch(vector<Vector2d> points) {
-// 	double alpha = 10.5;
+	vector<Radius> radiusHeap;
+	list<Triangle> triangles = listTriangles(points, radiusHeap);
+	
+	printPoints(points);
+	printTriangles(triangles);
+	printHeap(radiusHeap);
 
-// 	list<Triangle> triangles = listTriangles(points);
-
-// 	vector<double> heap = heapify(triangles);
-// 	double maxHeap = heap.front();
-
-// 	if (maxHeap > alpha) {
-// 		Vector2d midpoint = findPoint(maxHeap, triangles);
-// 		points = deletePoint(points, midpoint);
-		
-// 		return sch(points);
-// 	}
-// 	else {
-		
-// 		return points;
-// 	}
-// }
+	if(radiusHeap[0].radius > alpha) {
+		cout << "\nTriangles size" << triangles.size() << endl;
+		removePointFromHull(points, triangles, radiusHeap[0]);
+		printPoints(points);
+		printTriangles(triangles);
+	}
+}
 
 int main() {
-	vector<Vector2d> points = { Vector2d(0.5, 3.25), Vector2d(3.14, 1.36), Vector2d(4.14, 4.84), Vector2d(0.14, 0.36), Vector2d(2.21, 1.45), Vector2d(2.21, 2.2)};
+	vector<Point> points = { Point(Vector2d(0.5, 3.25)), Point(Vector2d(3.14, 1.36)), Point(Vector2d(4.14, 4.84)), 
+							Point(Vector2d(0.14, 0.36)), Point(Vector2d(2.21, 1.45)), Point(Vector2d(2.21, 2.2))};
 
-	int n = 1;
-	for (auto i = points.begin(); i != points.end(); i++) {
-		cout << "Point " << n << endl;
-		cout << *i << endl;
-		cout << "Length: " << (*i).norm() << endl;
-		cout << '\n' << endl;
-		n++;
-	}
-
-	vector<radius> radiusHeap;
-
-	list<Triangle> triangles = listTriangles(points, radiusHeap);
-	n = 1;
-	for(auto i = triangles.begin(); i != triangles.end(); i++) {
-		cout << "Triangle " << n << ": " << endl;
-		cout << "Circum circle: " << (*i).d << '\n' << endl;
-		n++;
-	}
-
-	cout << "\nHeap of cc radius" << endl;
-	for(auto i = radiusHeap.begin(); i != radiusHeap.end(); i++)	cout << (*i).index << ' ' << (*i).r << endl;
-
-	//vector<double> heap = heapify(triangles);
-
-	// points = sch(points); 
-	// cout << "SCH" << endl;
-	// n = 1;
-	// for (Vector2d& x : points) {
-	// 	cout << "Point " << n << endl;
-	// 	cout << x << '\n' << endl;
-	// 	n++;
-	// }
+	sch(points);
 
 	return 0;
 }
