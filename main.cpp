@@ -5,6 +5,7 @@
 #include <memory>
 #include <math.h> 
 #include <Eigen/Dense>
+#include <fstream>
 
 using namespace std;
 using namespace Eigen;
@@ -253,14 +254,9 @@ vector<Vector2d> sch(vector<Point> &points, double alpha){
 	vector<Radius> radiusHeap;
 	list<Triangle> triangles = listTriangles(points, radiusHeap);
 
-	printTriangles(triangles);
-	printHeap(radiusHeap);
-
 	while(radiusHeap[0].radius > alpha && checkIfMaxHeapIsInHull(radiusHeap, points, triangles)) {
 		removePointFromHull(points, triangles, radiusHeap[0]);
 		updateTriangles(points, triangles, radiusHeap);
-		printTriangles(triangles);
-		printHeap(radiusHeap);
 
 		while(!checkIfMaxHeapIsInHull(radiusHeap, points, triangles)) {
 			removeHeap(radiusHeap);
@@ -306,13 +302,16 @@ bool checkHull(const vector<Vector2d> &points, vector<Point> originalPoints, dou
 }
 
 int main() {
+	string pointsFromFile;
+	ifstream inFile;
+
 	vector<Point> points = { Point(Vector2d(0.5, 3.25)), Point(Vector2d(7.54, 0.63)), Point(Vector2d(4.14, 4.84)), 
 							Point(Vector2d(1.14, 6.36)), Point(Vector2d(1.12, 4.45))};
 
 	// vector<Point> points = { Point(Vector2d(0, 0)), Point(Vector2d(0, 1)), Point(Vector2d(0.5, 1)), 
 	// 						Point(Vector2d(1,1)), Point(Vector2d(1.01,0.5)), Point(Vector2d(1,0))};
 
-	vector<Vector2d> schPoints = sch(points, 1);
+	vector<Vector2d> schPoints = sch(points, 5.2);
 
 	cout << "\nPoints in strictly convex Hull" << endl;
 	for(auto i = schPoints.begin(); i != schPoints.end(); i++) cout << *i << '\n' << endl;
