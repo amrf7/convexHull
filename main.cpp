@@ -302,18 +302,28 @@ bool checkHull(const vector<Vector2d> &points, vector<Point> originalPoints, dou
 }
 
 int main() {
-	string pointsFromFile;
-	ifstream inFile;
+	string pointsInfo;
+	ifstream readFile;
+	double x, y;
+	vector <Point> points;
 
-	vector<Point> points = { Point(Vector2d(0.5, 3.25)), Point(Vector2d(7.54, 0.63)), Point(Vector2d(4.14, 4.84)), 
-							Point(Vector2d(1.14, 6.36)), Point(Vector2d(1.12, 4.45))};
+	readFile.open("points.txt");
+	if(!readFile) {
+		cout << "File not found." << endl;
+		exit(1);
+	}
 
-	// vector<Point> points = { Point(Vector2d(0, 0)), Point(Vector2d(0, 1)), Point(Vector2d(0.5, 1)), 
-	// 						Point(Vector2d(1,1)), Point(Vector2d(1.01,0.5)), Point(Vector2d(1,0))};
+	while(getline(readFile, pointsInfo)) {
+		// get substring and convert to double
+		x = atof(pointsInfo.substr(0, pointsInfo.find(';')).c_str());
+		y = atof(pointsInfo.substr(pointsInfo.find(';') + 1, pointsInfo.length()).c_str());
+		// add point to vector
+		points.push_back(Point(Vector2d(x, y)));
+	}
 
-	vector<Vector2d> schPoints = sch(points, 5.2);
+	vector<Vector2d> schPoints = sch(points, 2.5);
 
-	cout << "\nPoints in strictly convex Hull" << endl;
+	cout << "\nPoints in strictly convex hull" << endl;
 	for(auto i = schPoints.begin(); i != schPoints.end(); i++) cout << *i << '\n' << endl;
 
 	return 0;
